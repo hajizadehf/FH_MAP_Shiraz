@@ -4,29 +4,29 @@ import React, { Component } from 'react';
 class GoogleApiComponent extends Component {
     constructor(props) {
         super(props);
-        this.onScriptLoad = this.onScriptLoad.bind(this)      
+        this.onScriptLoad = this.onScriptLoad.bind(this)
     }
     state = {
         filteredLocation: [],
         markers: [],
-      map: null
+        map: null
     }
     onScriptLoad() {
         //console.log(!window.google)
         //if (!window.google) {
-            let map = new window.google.maps.Map(
-                document.getElementById(this.props.id),
-                this.props.options
-            );
-            this.setState({
-                map: map,
-                markers: this.props.currentMarkers
+        let map = new window.google.maps.Map(
+            document.getElementById(this.props.id),
+            this.props.options
+        );
+        this.setState({
+            map: map,
+            markers: this.props.currentMarkers
         })
-     //   this.props.onMapLoad(map)
+        //   this.props.onMapLoad(map)
         console.log(map)
-        this.state.markers.map((marker) => {
+        this.state.markers.forEach((marker) => {
             //console.log(map);
-            
+
             //marker.setMap(this.state.map)
             var marker1 = new window.google.maps.Marker({
                 position: marker.location,
@@ -38,23 +38,23 @@ class GoogleApiComponent extends Component {
                 this.populateInfoWindow(marker1, this.state.map)
             })
         })
-      //  }
+        //  }
 
-       
+
         //this.findFiltered(this.props.listLocations)
-       
-       // this.props.onMapLoad(map)
+
+        // this.props.onMapLoad(map)
     }
     componentWillMount() {
         console.log("Page mounted");
     }
 
     populateMarkers() {
-       /* this.setState({
-            markers: []
-        })*/
+        /* this.setState({
+             markers: []
+         })*/
         let currentMarkers = []
-        this.props.filteredLocation.map((location) => {
+        this.props.filteredLocation.forEach((location) => {
             /*var marker = new window.google.maps.Marker({
                 position: location.location,
                 map: map,
@@ -71,9 +71,9 @@ class GoogleApiComponent extends Component {
         })
 
     }
-  
+
     componentDidMount() {
-        
+
         if (!window.google) {
             var s = document.createElement('script');
             s.type = 'text/javascript';
@@ -88,10 +88,10 @@ class GoogleApiComponent extends Component {
         } else {
             this.onScriptLoad()
         }
-        
+
         if (this.props.filteredLocation.length < this.props.listLocations.length) {
-           // this.populateMarkers();
-           // console.log(this.state.markers);
+            // this.populateMarkers();
+            // console.log(this.state.markers);
             //     this.onScriptLoad();
             // console.log(this.props.filteredLocation);
         }
@@ -99,7 +99,7 @@ class GoogleApiComponent extends Component {
     populateInfoWindow(marker, map) {
         var infowindow = new window.google.maps.InfoWindow();
         // Check to make sure the infowindow is not already opened on this marker.
-        if (infowindow.marker != marker) {
+        if (infowindow.marker !== marker) {
             infowindow.marker = marker;
             infowindow.setContent('<div>' + marker.position + '</div>');
             infowindow.open(map, marker);
@@ -111,19 +111,19 @@ class GoogleApiComponent extends Component {
     }
 
     render() {
-       // console.log(this.state.markers);
-       // console.log(this.props.filteredLocation.length);
-       // console.log(this.props.listLocations.length);
-        
-       /* if (this.props.filteredLocation.length < this.props.listLocations.length) {
-            this.populateMarkers();
-            console.log(this.state.markers);
-        }*/
+        // console.log(this.state.markers);
+        // console.log(this.props.filteredLocation.length);
+        // console.log(this.props.listLocations.length);
+
+        /* if (this.props.filteredLocation.length < this.props.listLocations.length) {
+             this.populateMarkers();
+             console.log(this.state.markers);
+         }*/
         return (
             <div id={this.props.id}>
-              
-               
-</div>
+
+
+            </div>
         );
     }
 }

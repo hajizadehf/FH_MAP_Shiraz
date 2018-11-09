@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types'
-
+/**
+ * THIS IS NOT BEING USED ANYMORE
+ */
 
 class Locations extends React.Component {
     
