@@ -1,233 +1,280 @@
 import React, { Component } from 'react';
 import './App.css';
-import GoogleApiComponent from './util/GoogleApiComponent'
-
-
+import axios from "axios";
+import { mapStyles } from "./MapStyles"
+import { mapScriptUrl, fourSquareSearchURL, LoadMapScript, fourSquarePicsURL } from "./util"
+import SearchBar from "./SearchBar"
+import Map from "./Map"
+ 
 class App extends Component {
-
-    state = {
-        mapStyles: [
-            {
-                "elementType": "labels.text.fill",
-                "stylers": [
-                    {
-                        "color": "#800040"
-                    }
-                ]
-            },
-            {
-                "featureType": "landscape",
-                "elementType": "geometry.fill",
-                "stylers": [
-                    {
-                        "saturation": -20
-                    },
-                    {
-                        "lightness": 55
-                    }
-                ]
-            },
-            {
-                "featureType": "poi",
-                "elementType": "geometry.fill",
-                "stylers": [
-                    {
-                        "color": "#80bfbf"
-                    }
-                ]
-            },
-            {
-                "featureType": "road.arterial",
-                "elementType": "geometry.fill",
-                "stylers": [
-                    {
-                        "color": "#d9d9ff"
-                    }
-                ]
-            },
-            {
-                "featureType": "road.highway",
-                "elementType": "geometry.fill",
-                "stylers": [
-                    {
-                        "color": "#8080ff"
-                    }
-                ]
-            },
-            {
-                "featureType": "road.highway",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                    {
-                        "color": "#ffffff"
-                    }
-                ]
-            },
-            {
-                "featureType": "road.local",
-                "elementType": "geometry.fill",
-                "stylers": [
-                    {
-                        "color": "#aeaeff"
-                    }
-                ]
-            },
-            {
-                "featureType": "water",
-                "elementType": "geometry.fill",
-                "stylers": [
-                    {
-                        "color": "#ccc8fd"
-                    }
-                ]
-            },
-            {
-                "featureType": "water",
-                "elementType": "labels.text",
-                "stylers": [
-                    {
-                        "color": "#640032"
-                    }
-                ]
-            }
-        ],
+    constructor(props) {
+        super(props);
+        this.onScriptLoad = this.onScriptLoad.bind(this)
+    }
+    state = {        
         listLocations: [
-
-            { title: 'Thomb of Alexander III', location: { lat: 29.935914, lng: 52.892454 }, id: 1 },
-            { title: 'Perspolis', location: { lat: 29.935524, lng: 52.891566 }, id: 2 },
-            { title: 'Thomb of Alexander II', location: { lat: 29.933199, lng: 52.894492 }, id: 3 }
 
         ],
         filteredLocation: [
-            // { title: 'Thomb of Alexander III', location: { lat: 29.935914, lng: 52.892454 }, id: 1 },
-            //  { title: 'Perspolis', location: { lat: 29.935524, lng: 52.891566 }, id: 2 },
-            //  { title: 'Thomb of Alexander II', location: { lat: 29.933199, lng: 52.894492 }, id: 3 }
+
         ],
-        markers: [
-        ]
-    }
-    /*findFiltered(listLocations) {
-        var  ul, li, a, i;
-        let locations = [];
-        ul = document.getElementById("myMenu");
-        li = ul.getElementsByTagName("li");
-        for (i = 0; i < li.length; i++) {
-            a = li[i].getElementsByTagName("a")[0];
-            if (li[i].style.display != "none")
-                locations.push(listLocations.filter(location => location.id == li[i].id));             
-        }
-        this.setState({
-            filteredLocation: locations
-        })
-
-    }*/
-    componentDidMount() {
-        //   this.findFiltered(this.state.listLocations)
-        console.log("App.js Mounted")
-        let currentMarkers = []
-        var m = this.state.listLocations.map((location) => {
-            /* var marker = new window.google.maps.Marker({
-                 position: location.location,
-                 map: map,
-                 title: location.title
-             });*/
-            var marker = { position: location.location, title: location.title, map: null }
-            currentMarkers.push(marker)
-            return marker
-            /* marker.addListener('click', e => {
-                 this.populateInfoWindow(marker, map)
-             })*/
-        })
-        console.log(m)
-        this.setState({
-            filteredLocation: this.state.listLocations,
-            markers: currentMarkers
-        })
+        allMarkers: [],       
+        map: null,
+        infowindows: [],
+        venues: [],
+        photo: []
     }
 
 
-    foursquare() {
-        fetch('https://api.foursquare.com/v2/venues/explore?client_id=LOVKBEZQO43VNSGVC22RQ2Q1OOYSE3DTUY0EJRTILAZEFZSM&client_secret=5J1PFZIIS2DF1ZPXG4M20OJK3LWEMOTKGXQU225ULZDTHV0X&v=20180323&limit=1&ll=40.7243,-74.0018&query=coffee')
-            .then(function () {
-                // Code for handling API response
-            })
-            .catch(function () {
-                // Code for handling errors
+   /**
+    * This will run as soon as the script for google map has been loaded
+    */
+    onScriptLoad() {
+        const map = new window.google.maps.Map(
+            document.getElementById('myMap'),
+            {
+                center: { lat: 30.080049, lng: 53.135805 },
+            zoom: 10,
+                styles: mapStyles,
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    style: window.google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                    position: window.google.maps.ControlPosition.TOP_CENTER
+                },
+                scaleControl: true,
+                zoomControl: true,
+                zoomControlOptions: {
+                    position: window.google.maps.ControlPosition.RIGHT_CENTER
+                }
             });
-    }
-    searchLocation = (input) => {
-        var filter, ul, li, a, i;
-        let locations = [];
-        let currentMarkers = [];
-        this.setState({
-            filteredLocation: locations
-        })
-        //console.log(this.state.filteredLocations)
-        filter = input.toUpperCase();
-        ul = document.getElementById("myMenu");
-        li = ul.getElementsByTagName("li");
-        for (i = 0; i < li.length; i++) {
-            a = li[i].getElementsByTagName("a")[0];
-            if (a.innerHTML.toUpperCase().indexOf(filter) > -1) {
-                li[i].style.display = "";
-                let loc = this.state.listLocations.filter(location => location.id === li[i].id)[0];
-                locations.push(loc);
-                let marker = { position: loc.location, title: loc.title }
-                currentMarkers.push(marker)
+        let currentMarkers = []
+        let locations =[]
+     
+            this.state.venues.forEach((location, i) =>{
+                var marker1 = new window.google.maps.Marker({
+                    position: new window.google.maps.LatLng(
+                        location.venue.location.lat,
+                        location.venue.location.lng
+                    ),
+                //map: map,
+                    title: location.venue.name,
+                    id: location.venue.id,
+                    address: location.venue.location.address ? location.venue.location.address : "Address not found" ,
+                    animation: window.google.maps.Animation.DROP,
+                    tabIndex: 0
 
-            } else {
-                li[i].style.display = "none";
-            }
+                });
+                
+                marker1.setMap(map)
+                marker1.setVisible(true);
+                marker1.addListener('click', e => {
+                    this.populateInfoWindow(marker1, map)
+                })
+                locations.push({
+                    location: marker1.position,
+                    title: marker1.title,
+                    id: marker1.id
+                })
+            currentMarkers.push(marker1)
+        })
+        this.setState({
+            map: map,
+            allMarkers: currentMarkers,
+            filteredLocation: locations,
+            listLocations: locations
+        })
+        
+    }
+    /**
+  * Fetch Foursquare venues pictures
+  * TODO: Add this to the code
+  */
+     getVenuePictures = (venueid) => {
+       
+        let photo = "https://via.placeholder.com/150"
+         axios
+             .get(fourSquarePicsURL(venueid))
+            .then(response => {
+
+                let res = response.data.response.photos.items[0];
+                photo = `${res.prefix}150x150${res.suffix}`;
+                var photos = this.state.photo.concat({
+                    id: venueid,
+                    photo: photo
+                });
+                this.setState({
+                    photo: photos
+                })
+                //this.setState({ listLocations: photo })
+                // return photo
+            })
+            .catch(error => {
+
+                alert("error! " + error);
+                
+            });
+       
+    };
+
+    /*
+     Use FourSquare API to ge the list of the locations
+     */
+    getVenues = () => {      
+
+        axios
+            .get(fourSquareSearchURL())
+            .then(response => {
+                this.setState(
+                    {
+                        venues: response.data.response.groups[0].items,
+                        listLocations: response.data.response.groups[0].items
+                    },
+                    this.openMap()
+                );               
+              
+            })
+            .catch(error => {
+                alert("error! " + error);
+            });
+    };
+   
+
+    
+
+
+    componentWillMount() {
+    
+        this.getVenues();
+        window.gm_authFailure = () =>
+            alert(
+                "Google Maps is have trouble loading."
+            );   
+    }
+  
+    /*
+     This will run after the venues have been returned from forusquare API and will load the map
+     */
+    openMap = () => {      
+       
+        if (!window.google) {
+            var s = LoadMapScript(mapScriptUrl); 
+            // Below is important. 
+            //We cannot access google.maps until it's finished loading
+            s.addEventListener('load', e => {
+                this.onScriptLoad()
+            })
+        } else {
+            this.onScriptLoad()
+        }
+    }
+    /*
+     * Results of an input in the search input will run through this code to filter accourdingly
+     */
+    searchLocation = input => {
+        if (input !== "") {
+            const { listLocations } = this.state;
+            const filteredLocs = listLocations.filter(location => {
+                return location.title.toLowerCase().includes(input.toLowerCase());
+            });
+            this.setState(
+                {
+                    filteredLocation: filteredLocs
+                },
+                () => this.filterMarkers()
+            );
+        } else {
+            this.setState(
+                {
+                    filteredLocation: this.state.listLocations
+                },
+                () => this.filterMarkers()
+            );
+        }
+    };
+    /**
+     * Markers that are in the selection will be set visible and the rest will be set to invisible on the map
+     */
+    filterMarkers() {        
+        
+        let flocIds = this.state.filteredLocation.map(a => a.id);
+        this.state.allMarkers.forEach((marker) => {
+                if (!flocIds.includes(marker.id)) {
+                    marker.setVisible(false);
+                }
+                else {
+                    marker.setAnimation(window.google.maps.Animation.BOUNCE);                   
+                    setTimeout(() => marker.setAnimation(null), 750);
+                    marker.setVisible(true);
+                   
+                }            
+
+            })
+    }
+   /*
+    *This code will be called when the user selects a location from the location bar
+    */
+    selectMarker = input => {
+        
+        let selectedMarker = this.state.allMarkers.find(marker => marker.id === input);
+        selectedMarker.setAnimation(window.google.maps.Animation.BOUNCE);
+        setTimeout(() => selectedMarker.setAnimation(null), 750);
+        this.populateInfoWindow(selectedMarker);
+        this.state.map.setZoom(13);
+        this.state.map.setCenter(selectedMarker.position)
+    }
+    /**
+     * Marker info window will be populated on the map and if there is any infowindow open it will be closed before that
+     */
+    populateInfoWindow(marker, map,) {
+        var infowindow = new window.google.maps.InfoWindow();
+        if (this.state.infowindows.length > 0) {
+            this.state.infowindows.forEach((info) => {
+                info.close();
+            })
+        }
+        let infowindows =[]
+        // Check to make sure the infowindow is not already opened on this marker.
+        if (infowindow.marker !== marker) {            
+            infowindow.marker = marker;
+           
+            infowindow.setContent(`<div><p>${marker.title}</p><p>${marker.address}</p></div>`);
+            infowindow.open(map, marker);
+            infowindows.push(infowindow);
+            // Make sure the marker property is cleared if the infowindow is closed.
+            infowindow.addListener('closeclick', function () {
+                infowindow.setMarker = null;
+                infowindows.pop(infowindow)
+            });
         }
         this.setState({
-            filteredLocations: locations,
-            markers: currentMarkers
+            infowindows: infowindows
         })
-
-
     }
-
-
-    selectMarker(markerid) {
-
-    }
-
-
+  
     render() {
-        // this.findFiltered(this.state.listLocations);
-        console.log(this.state.markers);
+       
+        
         return (
-            <div className="row">
-
-                <div className="left">
-                    <h2>Locations</h2>
-                    <input type="text" id="mySearch" onKeyUp={(event) => this.searchLocation(event.target.value)} placeholder="Search.." title="Type in a category" />
-                    <ul id="myMenu">
-                        {this.state.listLocations.map((location) => (
-                            <li key={location.location.lat + location.location.lng} id={location.id} onClick={this.selectMarker(location.id)}>
-                                <a href="#"> {location.title} </a>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-
-                <div className="right">
-                    <GoogleApiComponent id="myMap" rol="application" aria-label="map" options={{
-                        center: { lat: 29.935524, lng: 52.891566 },
-                        zoom: 13,
-                        styles: this.state.mapStyles
-                    }}
-
-                        filteredLocation={this.state.filteredLocation}
-                        listLocations={this.state.listLocations}
-                        currentMarkers={this.state.markers}
-
-                    />
+            <div className="container mr-2 ml-2 pr-0 pl-0">
+                <div className="row">
+                    <div className="col-md-3 col-sm-12 col-xs-12 col-lg-2 pr-0 pl-0">
+                        <SearchBar
+                            filteredLocation={this.state.filteredLocation}
+                            selectMarker={this.selectMarker}
+                            searchLocation={this.searchLocation}
+                        />
+                    
+            </div>
+                    <div className="col-md-9 col-sm-12 col-xs-12 col-lg-10">
+                        <div className="right">
+                            <Map />
+                        </div>
+                    </div>
                 </div>
             </div>
-        );
-    }
-}
+            
+            )
+        };
+  }
 
 export default App;
